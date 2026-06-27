@@ -201,13 +201,13 @@
   .p-grid2{display:grid; grid-template-columns:1fr 1fr; gap:20px; padding-bottom:20px;}
   .p-label{font-size:10px; text-transform:uppercase; letter-spacing:0.04em; font-weight:600; color:var(--accent); margin-bottom:6px;}
   .p-bold{font-weight:600;}
-  .p-table{width:100%; border-collapse:collapse;}
+  .p-table{width:100%; border-collapse:collapse; border:1.5px solid #9aa3b2;}
   .p-table thead tr{background:var(--accent-tint);}
-  .p-table th{text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.04em; font-weight:600; padding:7px 10px; border-bottom:2px solid var(--accent); color:var(--accent);}
+  .p-table th{text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; padding:7px 10px; border:1px solid #9aa3b2; border-bottom:2px solid var(--accent); color:var(--accent);}
   .p-table th.r, .p-table td.r{text-align:right;}
-  .p-table td{padding:10px; border-bottom:1px solid #f1f1f4; font-size:12px; vertical-align:top;}
+  .p-table td{padding:10px; border:1px solid #9aa3b2; font-size:12px; vertical-align:top;}
   .p-table .desc{font-weight:500; font-size:12px;}
-  .p-table .det{font-size:10.5px; color:var(--zinc-400); margin-top:1px;}
+  .p-table .det{font-size:10.5px; color:var(--zinc-500); margin-top:1px;}
   .p-tot-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; padding-top:6px;}
   .p-tot-box{margin-left:auto; width:100%; max-width:280px; font-size:12px;}
   .p-trow{display:flex; justify-content:space-between; color:var(--zinc-600); padding:3px 0;}
@@ -221,6 +221,11 @@
   .p-thanks{text-align:center; font-size:10.5px; color:var(--zinc-400); margin-top:28px;}
   .no-print{}
 
+  /* Fixed page-edge decoration bars — only shown during print. They sit at
+     the true top/bottom edges of every printed page, independent of content
+     flow, so they never get pushed inward by the @page margin or content. */
+  .page-edge-top, .page-edge-bottom{ display:none; }
+
   @media print{
     @page{size:A4 portrait; margin:0;}
     html{font-size:8.5pt !important;}
@@ -228,19 +233,43 @@
     .no-print, header.topbar, .toast, .overlay{display:none !important;}
     main{padding:0 !important;}
     #print-area{border:none !important; border-radius:0 !important; box-shadow:none !important; max-width:none !important;}
-    /* The strips are direct children of #print-area (full page width); only
-       .p-inner gets padding, so the strips can sit flush with the true page
-       edge instead of being inset by a large @page margin. */
-    .p-inner{padding:6mm 9mm !important;}
-    .p-header{padding-bottom:12pt !important;}
-    .p-divider{margin-bottom:12pt !important;}
-    .p-grid2{padding-bottom:12pt !important;}
-    .p-sig{margin-top:16pt !important; padding-top:10pt !important;}
-    .p-sig-line{margin-top:26pt !important;}
-    .p-strip-bottom{margin-top:14pt !important;}
-    .p-thanks{margin-top:14pt !important;}
+
+    /* The in-flow strips are replaced by the fixed edge bars below. */
+    .p-strip, .p-strip-bottom{ display:none !important; }
+
+    /* Thick blue bar pinned to the very top edge, full page width. */
+    .page-edge-top{
+      display:block !important; position:fixed !important;
+      top:0; left:0; right:0; height:7mm; background:var(--accent) !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
+      z-index:1000;
+    }
+    /* Thin blue bar pinned to the very bottom edge, full page width. */
+    .page-edge-bottom{
+      display:block !important; position:fixed !important;
+      bottom:0; left:0; right:0; height:2.5mm; background:var(--accent) !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
+      z-index:1000;
+    }
+
+    /* Content padding keeps text/table clear of the fixed edge bars. */
+    .p-inner{padding:11mm 9mm 9mm !important;}
+    .p-header{padding-bottom:10pt !important;}
+    .p-divider{margin-bottom:10pt !important;}
+    .p-grid2{padding-bottom:10pt !important;}
+    .p-sig{margin-top:12pt !important; padding-top:8pt !important;}
+    .p-sig-line{margin-top:22pt !important;}
+    .p-thanks{margin-top:10pt !important;}
     .p-title{font-size:16pt !important;}
-    .p-logo, .p-logo-fallback{height:26pt !important;}
+    .p-logo, .p-logo-fallback{height:24pt !important;}
+
+    /* JS sets --print-scale on #print-area when content would exceed one
+       A4 page, shrinking it just enough to guarantee a single page. */
+    #print-area{
+      transform:scale(var(--print-scale, 1)) !important;
+      transform-origin:top left !important;
+      width:calc(100% / var(--print-scale, 1)) !important;
+    }
   }
 </style>
 </head>
@@ -970,6 +999,8 @@ function renderPreview(){
     <div id="print-status" class="x-small no-print" style="text-align:center; margin-bottom:8px; min-height:14px;"></div>
 
     <div id="print-scroll">
+    <div class="page-edge-top"></div>
+    <div class="page-edge-bottom"></div>
     <div id="print-area">
       <div class="p-strip"></div>
       <div class="p-inner">
@@ -1104,9 +1135,9 @@ async function handlePrint(){
   const statusEl = document.getElementById("print-status");
   const setStatus = (m)=>{ if (statusEl) statusEl.textContent = m; };
   setStatus("Preparing print — waiting for fonts + images…");
+  const area = document.getElementById("print-area");
   try{
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const area = document.getElementById("print-area");
     const imgs = area ? Array.from(area.querySelectorAll("img")) : [];
     await Promise.all(imgs.map(img => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
@@ -1119,7 +1150,34 @@ async function handlePrint(){
   } catch(e){
     setStatus("Wait step failed, printing anyway.");
   }
+
+  // ---- Guaranteed single-page fit ----
+  // Measure the rendered document and, if it's taller than one A4 page would
+  // hold at the print width, set a CSS scale factor that shrinks it just
+  // enough to fit. A4 ratio is 210:297; at the print render width the usable
+  // height is width * (297/210). If content exceeds that, scale = fit/actual.
+  if (area){
+    try{
+      area.style.removeProperty("--print-scale");
+      const rect = area.getBoundingClientRect();
+      const widthPx = rect.width;
+      const actualHeight = area.scrollHeight;
+      // Usable page height at this width, minus a small safety margin (~2%).
+      const pageHeight = widthPx * (297 / 210) * 0.98;
+      if (actualHeight > pageHeight){
+        const scale = Math.max(0.55, pageHeight / actualHeight);
+        area.style.setProperty("--print-scale", scale.toFixed(3));
+      }
+    }catch(e){ /* if measurement fails, print unscaled */ }
+  }
+
   setStatus("Ready — opening print dialog now.");
+  // Clear the scale override after the print dialog closes so the on-screen
+  // preview returns to normal.
+  const cleanup = ()=>{ if (area) area.style.removeProperty("--print-scale"); window.removeEventListener("afterprint", cleanup); };
+  window.addEventListener("afterprint", cleanup);
+  setTimeout(cleanup, 60000); // fallback cleanup
+
   window.print();
 }
 
