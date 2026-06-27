@@ -176,15 +176,25 @@
   .no-print{}
 
   @media print{
-    @page{size:A4 portrait; margin:14mm;}
-    html{font-size:9pt !important;}
+    @page{size:A4 portrait; margin:6mm;}
+    html{font-size:8.5pt !important;}
     html,body{background:#fff !important; margin:0 !important; padding:0 !important;}
     .no-print, header.topbar, .toast, .overlay{display:none !important;}
     main{padding:0 !important;}
     #print-area{border:none !important; border-radius:0 !important; box-shadow:none !important; max-width:none !important;}
-    .p-inner{padding:0 !important;}
-    .p-title{font-size:17pt !important;}
-    .p-logo, .p-logo-fallback{height:30pt !important;}
+    /* The strips are direct children of #print-area (full page width); only
+       .p-inner gets padding, so the strips can sit flush with the true page
+       edge instead of being inset by a large @page margin. */
+    .p-inner{padding:6mm 9mm !important;}
+    .p-header{padding-bottom:12pt !important;}
+    .p-divider{margin-bottom:12pt !important;}
+    .p-grid2{padding-bottom:12pt !important;}
+    .p-sig{margin-top:16pt !important; padding-top:10pt !important;}
+    .p-sig-line{margin-top:26pt !important;}
+    .p-strip-bottom{margin-top:14pt !important;}
+    .p-thanks{margin-top:14pt !important;}
+    .p-title{font-size:16pt !important;}
+    .p-logo, .p-logo-fallback{height:26pt !important;}
   }
 </style>
 </head>
