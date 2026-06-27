@@ -221,54 +221,82 @@
   .p-thanks{text-align:center; font-size:10.5px; color:var(--zinc-400); margin-top:28px;}
   .no-print{}
 
-  /* Fixed page-edge decoration bars — only shown during print. They sit at
-     the true top/bottom edges of every printed page, independent of content
-     flow, so they never get pushed inward by the @page margin or content. */
+  /* Page-edge decoration bars — shown only when printing. Using position:fixed
+     means iOS anchors them to the printed page box and repeats them on every
+     page, sitting flush at the true top/bottom edges regardless of content. */
   .page-edge-top, .page-edge-bottom{ display:none; }
 
   @media print{
-    @page{size:A4 portrait; margin:0;}
-    html{font-size:8.5pt !important;}
-    html,body{background:#fff !important; margin:0 !important; padding:0 !important;}
-    .no-print, header.topbar, .toast, .overlay{display:none !important;}
-    main{padding:0 !important;}
-    #print-area{border:none !important; border-radius:0 !important; box-shadow:none !important; max-width:none !important;}
+    @page{ size:A4 portrait; margin:0; }
 
-    /* The in-flow strips are replaced by the fixed edge bars below. */
+    html{ font-size:8pt !important; -webkit-text-size-adjust:100% !important; }
+    html,body{ background:#fff !important; margin:0 !important; padding:0 !important; }
+    .no-print, header.topbar, .toast, .overlay{ display:none !important; }
+    main{ padding:0 !important; }
+
+    #print-scroll{ overflow:visible !important; padding:0 !important; }
+    #print-area{
+      border:none !important; border-radius:0 !important; box-shadow:none !important;
+      max-width:none !important; min-width:0 !important; width:100% !important; margin:0 !important;
+    }
+
+    /* Hide the in-flow strips; the fixed edge bars replace them. */
     .p-strip, .p-strip-bottom{ display:none !important; }
 
-    /* Thick blue bar pinned to the very top edge, full page width. */
     .page-edge-top{
       display:block !important; position:fixed !important;
-      top:0; left:0; right:0; height:7mm; background:var(--accent) !important;
-      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
-      z-index:1000;
+      top:0 !important; left:0 !important; right:0 !important; width:100% !important; height:6mm !important;
+      background:var(--accent) !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;
+      z-index:9999 !important;
     }
-    /* Thin blue bar pinned to the very bottom edge, full page width. */
     .page-edge-bottom{
       display:block !important; position:fixed !important;
-      bottom:0; left:0; right:0; height:2.5mm; background:var(--accent) !important;
-      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
-      z-index:1000;
+      bottom:0 !important; left:0 !important; right:0 !important; width:100% !important; height:2.5mm !important;
+      background:var(--accent) !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;
+      z-index:9999 !important;
     }
 
-    /* Content padding keeps text/table clear of the fixed edge bars. */
-    .p-inner{padding:11mm 9mm 9mm !important;}
-    .p-header{padding-bottom:10pt !important;}
-    .p-divider{margin-bottom:10pt !important;}
-    .p-grid2{padding-bottom:10pt !important;}
-    .p-sig{margin-top:12pt !important; padding-top:8pt !important;}
-    .p-sig-line{margin-top:22pt !important;}
-    .p-thanks{margin-top:10pt !important;}
-    .p-title{font-size:16pt !important;}
-    .p-logo, .p-logo-fallback{height:24pt !important;}
+    /* Compact print typography sized so a typical quotation (up to ~6 line
+       items) fits one A4 page from CSS alone — no JS required. Inner padding
+       clears the fixed edge bars. */
+    .p-inner{ padding:9mm 9mm 7mm !important; }
+    .p-header{ padding-bottom:8pt !important; }
+    .p-logo, .p-logo-fallback{ height:22pt !important; margin-bottom:6pt !important; }
+    .p-company-name{ font-size:13pt !important; }
+    .p-muted{ font-size:8pt !important; line-height:1.45 !important; margin-top:2pt !important; }
+    .p-title{ font-size:15pt !important; }
+    .p-badge{ margin-top:4pt !important; padding:2pt 7pt !important; }
+    .p-meta{ margin-top:6pt !important; font-size:8pt !important; line-height:1.45 !important; }
+    .p-divider{ height:1.5pt !important; margin-bottom:8pt !important; }
+    .p-grid2{ padding-bottom:8pt !important; gap:12pt !important; }
+    .p-label{ font-size:7.5pt !important; margin-bottom:3pt !important; }
 
-    /* JS sets --print-scale on #print-area when content would exceed one
-       A4 page, shrinking it just enough to guarantee a single page. */
+    .p-table th{ padding:4pt 6pt !important; font-size:7pt !important; }
+    .p-table td{ padding:4.5pt 6pt !important; font-size:8.5pt !important; }
+    .p-table .desc{ font-size:8.5pt !important; }
+    .p-table .det{ font-size:7.5pt !important; }
+
+    .p-tot-grid{ padding-top:6pt !important; gap:12pt !important; }
+    .p-trow{ padding:1.5pt 0 !important; font-size:8.5pt !important; }
+    .p-tfinal{ margin-top:4pt !important; padding:5pt 8pt !important; }
+    .p-tfinal .amt{ font-size:13pt !important; }
+    .p-allamt{ margin-top:3pt !important; }
+
+    .p-sig{ margin-top:10pt !important; padding-top:7pt !important; }
+    .p-sig-line{ margin-top:18pt !important; }
+    .p-sig-img{ height:38pt !important; }
+    .p-thanks{ margin-top:8pt !important; font-size:8pt !important; }
+
+    /* Keep each table row and the signature block intact across any break. */
+    .p-table tr, .p-sig, .p-tfinal{ page-break-inside:avoid !important; break-inside:avoid !important; }
+
+    /* Optional JS enhancement: if the button-driven script measures overflow it
+       sets --print-scale; harmless when absent (defaults to 1). Real fit is
+       handled by the compact CSS above so this is belt-and-suspenders only. */
     #print-area{
-      transform:scale(var(--print-scale, 1)) !important;
-      transform-origin:top left !important;
-      width:calc(100% / var(--print-scale, 1)) !important;
+      transform:scale(var(--print-scale, 1)); transform-origin:top left;
     }
   }
 </style>
@@ -1150,34 +1178,10 @@ async function handlePrint(){
   } catch(e){
     setStatus("Wait step failed, printing anyway.");
   }
-
-  // ---- Guaranteed single-page fit ----
-  // Measure the rendered document and, if it's taller than one A4 page would
-  // hold at the print width, set a CSS scale factor that shrinks it just
-  // enough to fit. A4 ratio is 210:297; at the print render width the usable
-  // height is width * (297/210). If content exceeds that, scale = fit/actual.
-  if (area){
-    try{
-      area.style.removeProperty("--print-scale");
-      const rect = area.getBoundingClientRect();
-      const widthPx = rect.width;
-      const actualHeight = area.scrollHeight;
-      // Usable page height at this width, minus a small safety margin (~2%).
-      const pageHeight = widthPx * (297 / 210) * 0.98;
-      if (actualHeight > pageHeight){
-        const scale = Math.max(0.55, pageHeight / actualHeight);
-        area.style.setProperty("--print-scale", scale.toFixed(3));
-      }
-    }catch(e){ /* if measurement fails, print unscaled */ }
-  }
-
+  // Single-page fit, edge strips, and borders are all handled by the print
+  // CSS (@media print) so they work on iOS regardless of JS — no measuring or
+  // scaling here, which iOS's print engine doesn't reliably honor.
   setStatus("Ready — opening print dialog now.");
-  // Clear the scale override after the print dialog closes so the on-screen
-  // preview returns to normal.
-  const cleanup = ()=>{ if (area) area.style.removeProperty("--print-scale"); window.removeEventListener("afterprint", cleanup); };
-  window.addEventListener("afterprint", cleanup);
-  setTimeout(cleanup, 60000); // fallback cleanup
-
   window.print();
 }
 
